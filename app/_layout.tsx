@@ -1,10 +1,11 @@
 import { Stack } from 'expo-router';
+import { ThemeProvider } from './context/ThemeContext';
 
 export default function RootLayout() {
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      {/* headerShown: false ka matlab hai upar wala white title bar chup jana */}
-      <Stack.Screen name="index" />
-    </Stack>
+    // ThemeProvider poori app ko wrap karega taaki Switch har jagah kaam kare
+    <ThemeProvider>
+      <Stack screenOptions={{ headerShown: false }} />
+    </ThemeProvider>
   );
 }

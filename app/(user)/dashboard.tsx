@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, SafeAreaView, StatusBar, ActivityIndicator, Platform, Alert, Modal, ScrollView, KeyboardAvoidingView } from 'react-native';
-import { useRouter, useNavigation } from 'expo-router'; // 👈 useNavigation add kiya
-import { DrawerActions } from '@react-navigation/native'; // 👈 Drawer kholne ka tool
+import { useRouter, useNavigation } from 'expo-router'; 
+import { DrawerActions } from '@react-navigation/native'; 
 import { db, auth } from '../../config/firebaseConfig';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
+import { ThemeContext } from '../context/ThemeContext'; // 👈 Theme Manager Import Kiya
 
 const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
   if (!lat1 || !lon1 || !lat2 || !lon2) return 9999;
@@ -30,7 +31,11 @@ const formatDate = (timestamp: any) => {
 
 export default function UserDashboard() {
   const router = useRouter();
-  const navigation = useNavigation(); // 👈 Navigation variable banaya
+  const navigation = useNavigation();
+  
+  // 👈 THEME CONNECT KIYA
+  const { isDark, colors } = useContext(ThemeContext); 
+
   const [searchQuery, setSearchQuery] = useState('');
   const [isHindi, setIsHindi] = useState(false);
   const [donors, setDonors] = useState<any[]>([]);
@@ -66,13 +71,6 @@ export default function UserDashboard() {
     setTimeout(() => {
       setRefreshing(false);
     }, 1000);
-  };
-
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      router.replace('/'); 
-    } catch (error: any) { alert("Logout Failed: " + error.message); }
   };
 
   const handleSOSOpen = () => setShowSOSModal(true);
@@ -139,14 +137,14 @@ export default function UserDashboard() {
 
   const renderDonorCard = ({ item }: { item: any }) => {
     return (
-      <View style={styles.card}>
+      <View style={[styles.card, { backgroundColor: colors.cardBg, borderColor: colors.border }]}>
         <View style={styles.cardHeader}>
           <View style={styles.donorInfo}>
             <View style={styles.avatarCircle}>
               <Text style={styles.avatarText}>{item.fullName ? item.fullName.charAt(0) : 'D'}</Text>
             </View>
             <View style={styles.nameTextContainer}>
-              <Text style={styles.donorName} numberOfLines={1}>{item.fullName || 'Anonymous'}</Text>
+              <Text style={[styles.donorName, { color: colors.text }]} numberOfLines={1}>{item.fullName || 'Anonymous'}</Text>
               <Text style={styles.distanceText}>📍 {item.city} • {item.computedDistance} km</Text>
             </View>
           </View>
@@ -155,7 +153,7 @@ export default function UserDashboard() {
           </View>
         </View>
 
-        <View style={styles.cardBody}>
+        <View style={[styles.cardBody, { backgroundColor: isDark ? '#27272A' : '#FAFAFA', borderColor: colors.border }]}>
           <View style={styles.statusCol}>
             <Text style={styles.statusLabel}>{isHindi ? 'स्थिति' : 'Status'}</Text>
             <View style={styles.statusIndicatorRow}>
@@ -167,11 +165,11 @@ export default function UserDashboard() {
           </View>
           <View style={styles.statusColRight}>
             <Text style={styles.statusLabel}>{isHindi ? 'संपर्क' : 'Contact'}</Text>
-            <Text style={styles.statusValueDark}>{item.mobileNumber || 'N/A'}</Text>
+            <Text style={[styles.statusValueDark, { color: colors.text }]}>{item.mobileNumber || 'N/A'}</Text>
           </View>
         </View>
 
-        <View style={styles.registrationInfo}>
+        <View style={[styles.registrationInfo, { borderTopColor: colors.border }]}>
           <Ionicons name="calendar-outline" size={15} color="#71717A" />
           <Text style={styles.registrationText}>
             {isHindi ? 'पंजीकृत: ' : 'Registered: '} 
@@ -183,33 +181,32 @@ export default function UserDashboard() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F4F4F5" />
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
+      {/* Dynamic Status Bar */}
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
       
-      {/* 🛠️ UPDATED HEADER WITH HAMBURGER MENU BUTTON */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          {/* MENU BUTTON */}
           <TouchableOpacity 
             style={styles.menuButton} 
             onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
           >
-            <Ionicons name="menu" size={32} color="#09090B" />
+            <Ionicons name="menu" size={32} color={colors.text} />
           </TouchableOpacity>
           
           <View>
-            <Text style={styles.greeting}>{isHindi ? `नमस्ते, ${myFirstName} 👋` : `Hello, ${myFirstName} 👋`}</Text>
+            <Text style={[styles.greeting, { color: colors.text }]}>{isHindi ? `नमस्ते, ${myFirstName} 👋` : `Hello, ${myFirstName} 👋`}</Text>
             <Text style={styles.headerLocation}>📍 Live Hardware GPS Active</Text>
           </View>
         </View>
         
         <View style={styles.headerRight}>
-          <TouchableOpacity style={styles.iconButton} onPress={handleRefresh} disabled={refreshing}>
-            {refreshing ? <ActivityIndicator size="small" color="#E63946" /> : <Ionicons name="refresh-outline" size={18} color="#09090B" />}
+          <TouchableOpacity style={[styles.iconButton, { backgroundColor: colors.cardBg, borderColor: colors.border }]} onPress={handleRefresh} disabled={refreshing}>
+            {refreshing ? <ActivityIndicator size="small" color="#E63946" /> : <Ionicons name="refresh-outline" size={18} color={colors.text} />}
           </TouchableOpacity>
           
-          <TouchableOpacity style={styles.iconButton} onPress={() => setIsHindi(!isHindi)}>
-            <Text style={styles.iconButtonText}>A/अ</Text>
+          <TouchableOpacity style={[styles.iconButton, { backgroundColor: colors.cardBg, borderColor: colors.border }]} onPress={() => setIsHindi(!isHindi)}>
+            <Text style={[styles.iconButtonText, { color: colors.text }]}>A/अ</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -228,17 +225,23 @@ export default function UserDashboard() {
       </View>
 
       <View style={styles.searchSection}>
-        <Text style={styles.pageTitle}>{isHindi ? 'आसपास के रक्तदाता (30 किमी)' : 'Nearby Donors (Within 30km)'}</Text>
-        <View style={styles.searchInputContainer}>
+        <Text style={[styles.pageTitle, { color: isDark ? '#A1A1AA' : '#71717A' }]}>{isHindi ? 'आसपास के रक्तदाता (30 किमी)' : 'Nearby Donors (Within 30km)'}</Text>
+        <View style={[styles.searchInputContainer, { backgroundColor: colors.cardBg, borderColor: colors.border }]}>
           <Text style={styles.searchIcon}>🔍</Text>
-          <TextInput style={styles.searchInput} placeholder={isHindi ? "रक्त समूह या शहर खोजें..." : "Search blood group or city..."} placeholderTextColor="#A1A1AA" value={searchQuery} onChangeText={setSearchQuery} />
+          <TextInput 
+            style={[styles.searchInput, { color: colors.text }]} 
+            placeholder={isHindi ? "रक्त समूह या शहर खोजें..." : "Search blood group or city..."} 
+            placeholderTextColor="#A1A1AA" 
+            value={searchQuery} 
+            onChangeText={setSearchQuery} 
+          />
         </View>
       </View>
 
       {loading || !userCoords ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#E63946" />
-          <Text style={styles.loadingText}>Locating your coordinates...</Text>
+          <Text style={[styles.loadingText, { color: isDark ? '#A1A1AA' : '#71717A' }]}>Locating your coordinates...</Text>
         </View>
       ) : (
         <FlatList 
@@ -247,35 +250,35 @@ export default function UserDashboard() {
           renderItem={renderDonorCard}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
-          ListEmptyComponent={<Text style={styles.emptyText}>No nearby donors found within 30km.</Text>}
+          ListEmptyComponent={<Text style={[styles.emptyText, { color: isDark ? '#A1A1AA' : '#71717A' }]}>No nearby donors found within 30km.</Text>}
         />
       )}
 
       <Modal visible={showSOSModal} animationType="slide" transparent={true}>
         <View style={styles.modalOverlay}>
-          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalContent}>
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={[styles.modalContent, { backgroundColor: colors.background }]}>
             <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>{isHindi ? "🚨 आपातकालीन फॉर्म" : "🚨 Emergency Details"}</Text>
                 <Text style={styles.modalSubtitle}>{isHindi ? "यह विवरण तुरंत पास के डोनर्स के पास अलर्ट के रूप में जाएगा।" : "This short form data broadcasts live to nearby life-savers."}</Text>
               </View>
               <View style={styles.formInputGroup}>
-                <Text style={styles.formLabel}>{isHindi ? "मरीज का नाम" : "Patient Full Name"}</Text>
-                <TextInput style={styles.formInput} placeholder="e.g. Satish Kumar" placeholderTextColor="#A1A1AA" value={patientName} onChangeText={setPatientName} />
+                <Text style={[styles.formLabel, { color: colors.text }]}>{isHindi ? "मरीज का नाम" : "Patient Full Name"}</Text>
+                <TextInput style={[styles.formInput, { backgroundColor: colors.cardBg, borderColor: colors.border, color: colors.text }]} placeholder="e.g. Satish Kumar" placeholderTextColor="#A1A1AA" value={patientName} onChangeText={setPatientName} />
               </View>
               <View style={styles.formRow}>
                 <View style={[styles.formInputGroup, { flex: 1, marginRight: 10 }]}>
-                  <Text style={styles.formLabel}>{isHindi ? "लिंग" : "Gender"}</Text>
-                  <TextInput style={styles.formInput} placeholder="Male / Female" placeholderTextColor="#A1A1AA" value={patientGender} onChangeText={setPatientGender} />
+                  <Text style={[styles.formLabel, { color: colors.text }]}>{isHindi ? "लिंग" : "Gender"}</Text>
+                  <TextInput style={[styles.formInput, { backgroundColor: colors.cardBg, borderColor: colors.border, color: colors.text }]} placeholder="Male / Female" placeholderTextColor="#A1A1AA" value={patientGender} onChangeText={setPatientGender} />
                 </View>
                 <View style={[styles.formInputGroup, { flex: 1 }]}>
-                  <Text style={styles.formLabel}>{isHindi ? "रक्त समूह" : "Blood Group"}</Text>
-                  <TextInput style={styles.formInput} placeholder="e.g. O+, AB-" placeholderTextColor="#A1A1AA" autoCapitalize="characters" value={patientBlood} onChangeText={setPatientBlood} />
+                  <Text style={[styles.formLabel, { color: colors.text }]}>{isHindi ? "रक्त समूह" : "Blood Group"}</Text>
+                  <TextInput style={[styles.formInput, { backgroundColor: colors.cardBg, borderColor: colors.border, color: colors.text }]} placeholder="e.g. O+, AB-" placeholderTextColor="#A1A1AA" autoCapitalize="characters" value={patientBlood} onChangeText={setPatientBlood} />
                 </View>
               </View>
               <View style={styles.formInputGroup}>
-                <Text style={styles.formLabel}>{isHindi ? "अस्पताल का नाम और पता" : "Hospital Name / Location"}</Text>
-                <TextInput style={styles.formInput} placeholder="e.g. City Hospital, Delhi Road" placeholderTextColor="#A1A1AA" value={hospitalName} onChangeText={setHospitalName} />
+                <Text style={[styles.formLabel, { color: colors.text }]}>{isHindi ? "अस्पताल का नाम और पता" : "Hospital Name / Location"}</Text>
+                <TextInput style={[styles.formInput, { backgroundColor: colors.cardBg, borderColor: colors.border, color: colors.text }]} placeholder="e.g. City Hospital, Delhi Road" placeholderTextColor="#A1A1AA" value={hospitalName} onChangeText={setHospitalName} />
               </View>
               <TouchableOpacity style={styles.broadcastBtn} activeOpacity={0.9} onPress={handleSOSSubmit}>
                 <Text style={styles.broadcastBtnText}>{isHindi ? "🚨 लाइव ब्रॉडकास्ट अलर्ट भेजें" : "🚨 Send Live SOS Alert"}</Text>
@@ -298,16 +301,17 @@ export default function UserDashboard() {
   );
 }
 
+// STYLES PURANE WALE HI RAHENGE (Kyunki humne dynamic colors directly components mein add kar diye hain)
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#F4F4F5' },
+  safeArea: { flex: 1 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: Platform.OS === 'android' ? 20 : 10, marginBottom: 15 },
-  headerLeft: { flexDirection: 'row', alignItems: 'center' }, // 👈 Naya style
-  menuButton: { marginRight: 15, padding: 2 }, // 👈 Naya style
-  greeting: { fontSize: 24, fontWeight: '800', color: '#09090B', letterSpacing: -0.5 },
+  headerLeft: { flexDirection: 'row', alignItems: 'center' }, 
+  menuButton: { marginRight: 15, padding: 2 }, 
+  greeting: { fontSize: 24, fontWeight: '800', letterSpacing: -0.5 },
   headerLocation: { fontSize: 13, color: '#10B981', fontWeight: '600', marginTop: 4 },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  iconButton: { backgroundColor: '#FFFFFF', width: 40, height: 40, borderRadius: 20, borderWidth: 1, borderColor: '#E4E4E7', justifyContent: 'center', alignItems: 'center' },
-  iconButtonText: { fontSize: 14, fontWeight: 'bold', color: '#09090B' },
+  iconButton: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, justifyContent: 'center', alignItems: 'center' },
+  iconButtonText: { fontSize: 14, fontWeight: 'bold' },
   sosContainer: { paddingHorizontal: 20, marginBottom: 20 },
   sosButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#EF4444', borderRadius: 20, padding: 16, shadowColor: '#EF4444', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.35, shadowRadius: 10, elevation: 6 },
   sosIconCircle: { width: 46, height: 46, borderRadius: 23, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center', marginRight: 15 },
@@ -315,47 +319,47 @@ const styles = StyleSheet.create({
   sosTitle: { color: '#FFFFFF', fontSize: 16, fontWeight: '800', marginBottom: 2, letterSpacing: 0.5 },
   sosSubtitle: { color: 'rgba(255,255,255,0.85)', fontSize: 12, fontWeight: '500' },
   searchSection: { paddingHorizontal: 20, marginBottom: 10 },
-  pageTitle: { fontSize: 17, fontWeight: '700', color: '#71717A', marginBottom: 12 },
-  searchInputContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', borderRadius: 16, paddingHorizontal: 16, borderWidth: 1, borderColor: '#E4E4E7', height: 55 },
+  pageTitle: { fontSize: 17, fontWeight: '700', marginBottom: 12 },
+  searchInputContainer: { flexDirection: 'row', alignItems: 'center', borderRadius: 16, paddingHorizontal: 16, borderWidth: 1, height: 55 },
   searchIcon: { fontSize: 18, marginRight: 10 },
-  searchInput: { flex: 1, fontSize: 16, color: '#09090B' },
+  searchInput: { flex: 1, fontSize: 16 },
   listContainer: { paddingHorizontal: 20, paddingBottom: 100 },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  loadingText: { marginTop: 10, color: '#71717A', fontSize: 15 },
-  emptyText: { textAlign: 'center', marginTop: 40, color: '#71717A', fontSize: 16 },
-  card: { backgroundColor: '#FFFFFF', borderRadius: 24, padding: 20, marginBottom: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.04, shadowRadius: 10, elevation: 3, borderWidth: 1, borderColor: '#F4F4F5' },
+  loadingText: { marginTop: 10, fontSize: 15 },
+  emptyText: { textAlign: 'center', marginTop: 40, fontSize: 16 },
+  card: { borderRadius: 24, padding: 20, marginBottom: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.04, shadowRadius: 10, elevation: 3, borderWidth: 1 },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 18 },
   donorInfo: { flexDirection: 'row', flex: 1, paddingRight: 15 },
   avatarCircle: { width: 54, height: 54, borderRadius: 27, backgroundColor: '#FFF1F2', justifyContent: 'center', alignItems: 'center', marginRight: 15, borderWidth: 1.5, borderColor: '#FFE4E6' },
   avatarText: { fontSize: 22, fontWeight: '800', color: '#E63946' },
   nameTextContainer: { flex: 1, justifyContent: 'center' },
-  donorName: { fontSize: 19, fontWeight: '800', color: '#09090B', marginBottom: 4, letterSpacing: -0.3 },
+  donorName: { fontSize: 19, fontWeight: '800', marginBottom: 4, letterSpacing: -0.3 },
   distanceText: { fontSize: 13, color: '#71717A', fontWeight: '500' },
   bloodBadge: { backgroundColor: '#E63946', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12, alignSelf: 'flex-start', shadowColor: '#E63946', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 6, elevation: 4 },
   bloodBadgeText: { color: '#FFFFFF', fontWeight: '900', fontSize: 15 },
-  cardBody: { flexDirection: 'row', justifyContent: 'space-between', backgroundColor: '#FAFAFA', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: '#F4F4F5' },
+  cardBody: { flexDirection: 'row', justifyContent: 'space-between', padding: 16, borderRadius: 12, borderWidth: 1 },
   statusCol: { flex: 1 },
   statusColRight: { flex: 1, alignItems: 'flex-end' },
   statusLabel: { fontSize: 12, color: '#A1A1AA', marginBottom: 6, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },
   statusIndicatorRow: { flexDirection: 'row', alignItems: 'center' },
   statusDot: { width: 8, height: 8, borderRadius: 4, marginRight: 6 },
   statusValue: { fontSize: 14, fontWeight: '700' },
-  statusValueDark: { fontSize: 15, fontWeight: '800', color: '#09090B' },
-  registrationInfo: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: '#F4F4F5' },
+  statusValueDark: { fontSize: 15, fontWeight: '800' },
+  registrationInfo: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 16, paddingTop: 16, borderTopWidth: 1 },
   registrationText: { fontSize: 13, color: '#71717A', fontWeight: '600', marginLeft: 6 },
   fabContainer: { position: 'absolute', bottom: 30, left: 0, right: 0, alignItems: 'center' },
   fabButton: { flexDirection: 'row', backgroundColor: '#E63946', paddingVertical: 16, paddingHorizontal: 30, borderRadius: 30, alignItems: 'center', shadowColor: '#E63946', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.3, shadowRadius: 15, elevation: 8 },
   fabIcon: { fontSize: 20, marginRight: 10 },
   fabText: { color: '#FFFFFF', fontSize: 16, fontWeight: 'bold', letterSpacing: 0.5 },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
-  modalContent: { backgroundColor: '#FFFFFF', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 24, maxHeight: '85%' },
+  modalContent: { borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 24, maxHeight: '85%' },
   modalHeader: { marginBottom: 25, alignItems: 'center' },
   modalTitle: { fontSize: 22, fontWeight: '800', color: '#EF4444', marginBottom: 6 },
   modalSubtitle: { fontSize: 14, color: '#71717A', textAlign: 'center', lineHeight: 20 },
   formInputGroup: { marginBottom: 18 },
   formRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  formLabel: { fontSize: 14, fontWeight: '600', color: '#09090B', marginBottom: 8 },
-  formInput: { backgroundColor: '#F4F4F5', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, fontSize: 16, color: '#09090B', borderWidth: 1, borderColor: '#E4E4E7' },
+  formLabel: { fontSize: 14, fontWeight: '600', marginBottom: 8 },
+  formInput: { borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, fontSize: 16, borderWidth: 1 },
   broadcastBtn: { backgroundColor: '#EF4444', paddingVertical: 16, borderRadius: 14, alignItems: 'center', marginTop: 15, shadowColor: '#EF4444', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 },
   broadcastBtnText: { color: '#FFFFFF', fontSize: 16, fontWeight: 'bold' },
   cancelModalBtn: { marginTop: 12, paddingVertical: 14, alignItems: 'center' },

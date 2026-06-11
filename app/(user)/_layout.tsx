@@ -1,63 +1,82 @@
-import { View, Text } from 'react-native';
+import React, { useContext } from 'react';
+import { View, Text, Switch } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Drawer } from 'expo-router/drawer';
 import { DrawerContentScrollView, DrawerItemList } from '@react-navigation/drawer';
 import { Ionicons } from '@expo/vector-icons';
+import { ThemeContext } from '../context/ThemeContext'; // Sahi path for Context
 
-// Custom Drawer Content (Jisme Stamp lagega)
+// Custom Drawer Content (Jisme Stamp aur Dark Mode Toggle lagega)
 function CustomDrawerContent(props: any) {
+  const { isDark, toggleTheme } = useContext(ThemeContext);
+
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: isDark ? '#09090B' : '#FFFFFF' }}>
       <DrawerContentScrollView {...props}>
         <DrawerItemList {...props} />
       </DrawerContentScrollView>
       
-      {/* 🏆 THE MASTER STAMP */}
+      {/* 🌙 DARK MODE TOGGLE SWITCH */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 24, paddingVertical: 15, borderTopWidth: 1, borderColor: isDark ? '#27272A' : '#E4E4E7', backgroundColor: isDark ? '#18181B' : '#FAFAFA' }}>
+        <Text style={{ fontSize: 14, fontWeight: '700', color: isDark ? '#FAFAFA' : '#09090B' }}>
+          {isDark ? '🌙 Dark Mode' : '☀️ Light Mode'}
+        </Text>
+        <Switch 
+          trackColor={{ false: '#3F3F46', true: '#E63946' }}
+          thumbColor={'#FFFFFF'}
+          onValueChange={toggleTheme}
+          value={isDark}
+        />
+      </View>
+
       {/* 🏆 THE PREMIUM MASTER STAMP */}
-      <View style={{ padding: 24, borderTopWidth: 1, borderColor: '#E4E4E7', backgroundColor: '#FAFAFA', paddingBottom: 40, alignItems: 'center' }}>
+      <View style={{ padding: 24, borderTopWidth: 1, borderColor: isDark ? '#27272A' : '#E4E4E7', backgroundColor: isDark ? '#18181B' : '#FAFAFA', paddingBottom: 40, alignItems: 'center' }}>
         
         {/* Students Card */}
-        <View style={{ backgroundColor: '#FFFFFF', paddingHorizontal: 12, paddingVertical: 10, borderRadius: 10, borderWidth: 1, borderColor: '#E4E4E7', marginBottom: 12, width: '100%', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 1 }}>
-           <Text style={{ fontSize: 10, color: '#71717A', textAlign: 'center', fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 3 }}>
+        <View style={{ backgroundColor: isDark ? '#27272A' : '#FFFFFF', paddingHorizontal: 12, paddingVertical: 10, borderRadius: 10, borderWidth: 1, borderColor: isDark ? '#3F3F46' : '#E4E4E7', marginBottom: 12, width: '100%', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 1 }}>
+           <Text style={{ fontSize: 10, color: '#A1A1AA', textAlign: 'center', fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 3 }}>
              Designed By
            </Text>
-           <Text style={{ fontSize: 13, color: '#09090B', textAlign: 'center', fontWeight: '800' }}>
+           <Text style={{ fontSize: 13, color: isDark ? '#FAFAFA' : '#09090B', textAlign: 'center', fontWeight: '800' }}>
              Class 11 Students
            </Text>
-           <Text style={{ fontSize: 11, color: '#71717A', textAlign: 'center', marginTop: 3, fontWeight: '500' }}>
+           <Text style={{ fontSize: 11, color: '#A1A1AA', textAlign: 'center', marginTop: 3, fontWeight: '500' }}>
              Lakshya Public School, Baghpat
            </Text>
         </View>
 
         {/* Teacher/Mentor Card */}
-        <View style={{ backgroundColor: '#FFF1F2', paddingHorizontal: 12, paddingVertical: 10, borderRadius: 10, width: '100%', borderWidth: 1, borderColor: '#FECDD3' }}>
-           <Text style={{ fontSize: 10, color: '#E63946', textAlign: 'center', fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 3 }}>
+        <View style={{ backgroundColor: isDark ? '#3F0F14' : '#FFF1F2', paddingHorizontal: 12, paddingVertical: 10, borderRadius: 10, width: '100%', borderWidth: 1, borderColor: isDark ? '#881337' : '#FECDD3' }}>
+           <Text style={{ fontSize: 10, color: isDark ? '#FDA4AF' : '#E63946', textAlign: 'center', fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 3 }}>
              Developed & Mentored By
            </Text>
-           <Text style={{ fontSize: 14, color: '#E63946', textAlign: 'center', fontWeight: '900', letterSpacing: 0.5 }}>
+           <Text style={{ fontSize: 14, color: isDark ? '#FFE4E6' : '#E63946', textAlign: 'center', fontWeight: '900', letterSpacing: 0.5 }}>
              Rishab Verma
            </Text>
-           <Text style={{ fontSize: 11, color: '#E63946', textAlign: 'center', fontWeight: '600', marginTop: 2 }}>
+           <Text style={{ fontSize: 11, color: isDark ? '#FDA4AF' : '#E63946', textAlign: 'center', fontWeight: '600', marginTop: 2 }}>
              (PGT Computer Science)
            </Text>
         </View>
 
-      </View>git add .
+      </View>
     </View>
   );
 }
 
 export default function UserDrawerLayout() {
+  const { isDark } = useContext(ThemeContext);
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Drawer
         drawerContent={(props) => <CustomDrawerContent {...props} />}
         screenOptions={{
           headerShown: false, 
-          drawerActiveBackgroundColor: '#FFF1F2',
-          drawerActiveTintColor: '#E63946',
-          drawerInactiveTintColor: '#09090B',
-          drawerStyle: { backgroundColor: '#FFFFFF', width: 280 },
+          // Dynamic Colors for Drawer Items based on Theme
+          drawerActiveBackgroundColor: isDark ? '#3F0F14' : '#FFF1F2',
+          drawerActiveTintColor: isDark ? '#FDA4AF' : '#E63946',
+          drawerInactiveTintColor: isDark ? '#FAFAFA' : '#09090B',
+          drawerStyle: { backgroundColor: isDark ? '#09090B' : '#FFFFFF', width: 280 },
           drawerLabelStyle: { fontSize: 16, fontWeight: '600', marginLeft: -10 },
         }}
       >
